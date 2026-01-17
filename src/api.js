@@ -245,6 +245,13 @@ app.get("/api/recent-scrobbles", async (req, res) => {
   }
 });
 
+const errorHandler = require("./utils/errorHandler");
+
+// ... existing routes ...
+
+// Global Error Handler (must be last)
+app.use(errorHandler);
+
 app.listen(PORT, () => {
   console.log(`🚀 Dashboard running in http://localhost:${PORT}`);
 });
