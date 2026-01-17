@@ -245,6 +245,27 @@ app.get("/api/recent-scrobbles", async (req, res) => {
   }
 });
 
+const { sync } = require("./sync");
+let isSyncing = false;
+
+app.post("/api/sync", async (req, res) => {
+  if (isSyncing) {
+    return res.status(409).json({ error: "Sync already in progress" });
+  }
+
+  isSyncing = true;
+  res.json({ message: "Sync started" }); // Respond immediately
+
+  try {
+    const isFull = req.body.full === true;
+    await sync({ full: isFull });
+  } catch (err) {
+    console.error("Manual sync failed:", err);
+  } finally {
+    isSyncing = false;
+  }
+});
+
 const errorHandler = require("./utils/errorHandler");
 
 // ... existing routes ...

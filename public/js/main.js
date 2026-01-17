@@ -65,3 +65,54 @@ initFilters(() => {
 
 toggleView("dashboard");
 reloadDashboardData();
+
+// Sync Logic
+const syncBtn = document.getElementById("force-sync-btn");
+if (syncBtn) {
+  syncBtn.addEventListener("click", async () => {
+    try {
+      syncBtn.disabled = true;
+      syncBtn.innerHTML = '<i class="mdi mdi-loading mdi-spin"></i> Syncing...';
+      
+      const res = await fetch("/api/sync", { method: "POST" });
+      
+      if (res.ok) {
+        showToast("Sync started in background.", "success");
+        // Poll or just wait a bit and reload? For now, let's just reload after a delay or let user reload.
+        // Better: periodic check? simpler: just notify.
+      } else {
+        const err = await res.json();
+        showToast(err.error || "Sync failed", "danger");
+      }
+    } catch (err) {
+      console.error(err);
+      showToast("Network error triggering sync", "danger");
+    } finally {
+      setTimeout(() => {
+        syncBtn.disabled = false;
+        syncBtn.innerHTML = '<i class="mdi mdi-sync text-green"></i> Force sync';
+      }, 5000); // Prevent spamming
+    }
+  });
+}
+
+function showToast(message, type = "success") {
+  const toastContainer = document.getElementById("toast-container");
+  const color = type === "success" ? "bg-success" : "bg-danger";
+  
+  const toastHtml = `
+    <div class="toast align-items-center text-white ${color} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+      <div class="d-flex">
+        <div class="toast-body">
+          ${message}
+        </div>
+        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+      </div>
+    </div>
+  `;
+  
+  toastContainer.innerHTML = toastHtml;
+  setTimeout(() => {
+    toastContainer.innerHTML = "";
+  }, 4000);
+}
