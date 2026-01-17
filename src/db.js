@@ -41,6 +41,29 @@ const MIGRATIONS = [
     key TEXT PRIMARY KEY,
     value TEXT
   );
+  `,
+  // Version 4: Loved Tracks
+  `
+  CREATE TABLE IF NOT EXISTS loved_tracks (
+    artist TEXT NOT NULL,
+    track TEXT NOT NULL,
+    url TEXT,
+    image TEXT,
+    loved_at INTEGER NOT NULL,
+    PRIMARY KEY (artist, track)
+  );
+  `,
+  // Version 5: Events
+  `
+  CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY,
+    title TEXT,
+    artists TEXT,
+    venue TEXT,
+    start_date INTEGER,
+    url TEXT,
+    image TEXT
+  );
   `
 ];
 

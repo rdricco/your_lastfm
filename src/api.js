@@ -246,6 +246,9 @@ app.get("/api/recent-scrobbles", async (req, res) => {
 });
 
 const { sync } = require("./sync");
+const { syncLovedTracks } = require("./sync-loved");
+const { syncEvents } = require("./sync-events");
+
 let isSyncing = false;
 
 app.post("/api/sync", async (req, res) => {
@@ -258,11 +261,44 @@ app.post("/api/sync", async (req, res) => {
 
   try {
     const isFull = req.body && req.body.full === true;
-    await sync({ full: isFull });
+    
+    // Run all syncs
+    await Promise.all([
+      sync({ full: isFull }),
+      syncLovedTracks(),
+      syncEvents()
+    ]);
+    
   } catch (err) {
     console.error("Manual sync failed:", err);
   } finally {
     isSyncing = false;
+  }
+});
+
+app.get("/api/loved-tracks", (req, res) => {
+  try {
+    const tracks = db.prepare(`
+      SELECT * FROM loved_tracks 
+      ORDER BY loved_at DESC
+    `).all();
+    res.json(tracks);
+  } catch (err) {
+    console.error("Failed to fetch loved tracks:", err);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
+app.get("/api/events", (req, res) => {
+  try {
+    const events = db.prepare(`
+      SELECT * FROM events 
+      ORDER BY start_date ASC
+    `).all();
+    res.json(events);
+  } catch (err) {
+    console.error("Failed to fetch events:", err);
+    res.status(500).json({ error: "Internal error" });
   }
 });
 

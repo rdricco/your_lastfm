@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YourLastFM - Loved Tracks</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <link rel="icon" type="image/x-icon" href="/images/favicon.ico">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="text-light">
+
+  <nav class="navbar navbar-dark bg-black px-4">
+    <a class="navbar-brand fs-3" href="/">
+      <i class="mdi mdi-archive-music text-green"></i>
+      Your LastFM
+    </a>
+    <div class="navbar-nav d-flex flex-row gap-4">
+      <a class="nav-link nav-btn" href="/">Dashboard</a>
+      <a class="nav-link nav-btn active" href="#">Loved Tracks</a>
+      <a class="nav-link nav-btn" href="/events.html">Events</a>
+      <a class="nav-link nav-btn" href="/settings.html">Settings</a>
+    </div>
+  </nav>
+
+  <main class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+      <h2 class="fs-4 mb-0">Loved Tracks</h2>
+    </div>
+
+    <div id="loading" class="text-center py-5">
+      <div class="spinner-border text-green" role="status"></div>
+    </div>
+
+    <div id="loved-tracks-grid" class="row g-3">
+      <!-- Tracks will be injected here -->
+    </div>
+  </main>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script type="module" src="/js/loved.js"></script>
+</body>
+</html>
