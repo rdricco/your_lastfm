@@ -11,6 +11,6 @@ RUN npm install --production
 COPY . .
 RUN chmod +x entrypoint.sh
 
-EXPOSE 3000
+EXPOSE 1533
 
 ENTRYPOINT ["./entrypoint.sh"]
