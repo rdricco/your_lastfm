@@ -1,7 +1,14 @@
 const Database = require("better-sqlite3");
 const path = require("path");
 
-const db = new Database(path.join(__dirname, "../data/stats.db"));
+const fs = require('fs');
+
+const dbDir = path.join(__dirname, "../data");
+if (!fs.existsSync(dbDir)) {
+  fs.mkdirSync(dbDir, { recursive: true });
+}
+
+const db = new Database(path.join(dbDir, "stats.db"));
 
 // Enable WAL mode for better concurrency (readers don't block writers)
 db.pragma('journal_mode = WAL');
