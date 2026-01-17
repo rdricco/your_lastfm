@@ -2,3 +2,4 @@
 /data
 /node_modules
 /data/stats.db
+.agent/*
