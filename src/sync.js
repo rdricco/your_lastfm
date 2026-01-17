@@ -37,21 +37,39 @@ const runSyncTransaction = db.transaction((tracks) => {
   return count;
 });
 
-async function fetchLastfmPage(page, retries = 3) {
-  const { data } = await axios.get(CONFIG.API_URL, {
-    timeout: 10000,
-    params: {
-      method: "user.getrecenttracks",
-      user: process.env.LASTFM_USERNAME,
-      api_key: process.env.LASTFM_API_KEY,
-      format: "json",
-      limit: CONFIG.PER_PAGE,
-      page
-    }
-  });
 
-  if (data.error) throw new Error(data.message);
-  return data.recenttracks;
+
+async function fetchLastfmPage(page, retries = 3) {
+  let attempt = 0;
+  
+  while (attempt <= retries) {
+    try {
+      const { data } = await axios.get(CONFIG.API_URL, {
+        timeout: 10000,
+        params: {
+          method: "user.getrecenttracks",
+          user: process.env.LASTFM_USERNAME,
+          api_key: process.env.LASTFM_API_KEY,
+          format: "json",
+          limit: CONFIG.PER_PAGE,
+          page
+        }
+      });
+
+      if (data.error) throw new Error(data.message);
+      return data.recenttracks;
+
+    } catch (err) {
+      attempt++;
+      if (attempt > retries) {
+         throw new Error(`Failed to fetch Last.fm page ${page} after ${retries} retries: ${err.message}`);
+      }
+      
+      const waitTime = CONFIG.RETRY_DELAY * Math.pow(2, attempt - 1);
+      console.warn(`⚠️ Error fetching page ${page} (Attempt ${attempt}/${retries}). Retrying in ${waitTime}ms...`, err.message);
+      await sleep(waitTime);
+    }
+  }
 }
 
 async function sync(options = {}) {
