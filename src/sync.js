@@ -2,6 +2,8 @@ require("dotenv").config();
 const axios = require("axios");
 const db = require("./db");
 
+const SettingsService = require("./services/settings");
+
 const CONFIG = {
   API_URL: "https://ws.audioscrobbler.com/2.0/",
   RETRY_DELAY: 3000,
@@ -38,7 +40,6 @@ const runSyncTransaction = db.transaction((tracks) => {
 });
 
 
-
 async function fetchLastfmPage(page, retries = 3) {
   let attempt = 0;
   
@@ -48,12 +49,13 @@ async function fetchLastfmPage(page, retries = 3) {
         timeout: 10000,
         params: {
           method: "user.getrecenttracks",
-          user: process.env.LASTFM_USERNAME,
-          api_key: process.env.LASTFM_API_KEY,
+          user: SettingsService.get("LASTFM_USERNAME"),
+          api_key: SettingsService.get("LASTFM_API_KEY"),
           format: "json",
           limit: CONFIG.PER_PAGE,
           page
         }
+
       });
 
       if (data.error) throw new Error(data.message);

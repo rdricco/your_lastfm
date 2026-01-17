@@ -10,13 +10,48 @@ const { buildRangeFilter, fillMissingDates } = require("./utils/dateRange");
 const { ensureAlbumCover } = require("./services/albumCoverCache");
 const { ensureArtistImage } = require("./services/artistImageCache");
 
+const SettingsService = require("./services/settings");
+
 const app = express();
 const PORT = process.env.PORT || 1533;
-const AVG_TRACK_SECONDS = 180;
 
 app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, "../public")));
+
+// Settings Endpoints
+app.get("/api/settings", (req, res) => {
+  const settings = SettingsService.getAll();
+  // Mask sensitive data for UI
+  const masked = {
+    ...settings,
+    LASTFM_API_KEY: settings.LASTFM_API_KEY ? "●●●●●●●●" : "",
+    LASTFM_USERNAME: settings.LASTFM_USERNAME
+  };
+  res.json(masked);
+});
+
+app.post("/api/settings", (req, res) => {
+  try {
+    const { LASTFM_API_KEY, LASTFM_USERNAME, AVG_TRACK_SECONDS } = req.body;
+    
+    // Only update provided fields (partial update not supported by simple UI yet, but robust)
+    const updates = {};
+    // If masking is sent back, ignore it. Only update if it looks like a real new value.
+    if (LASTFM_API_KEY && !LASTFM_API_KEY.includes("●")) updates.LASTFM_API_KEY = LASTFM_API_KEY;
+    if (LASTFM_USERNAME) updates.LASTFM_USERNAME = LASTFM_USERNAME;
+    if (AVG_TRACK_SECONDS) updates.AVG_TRACK_SECONDS = AVG_TRACK_SECONDS;
+
+    SettingsService.updateAll(updates);
+    
+    console.log("⚙️ Settings updated:", Object.keys(updates));
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Failed to update settings:", err);
+    res.status(500).json({ error: "Internal error" });
+  }
+});
+
 
 app.get("/api/top-artists", async (req, res) => {
   res.set('Cache-Control', 'no-store');
@@ -55,6 +90,7 @@ app.get("/api/top-artists", async (req, res) => {
 
 app.get("/api/top-tracks", async (req, res) => {
   const filter = getActiveFilter(req.query);
+  const avgSeconds = SettingsService.get("AVG_TRACK_SECONDS") || 180;
 
   const rows = db.prepare(`
     SELECT
@@ -67,7 +103,7 @@ app.get("/api/top-tracks", async (req, res) => {
     GROUP BY track, artist, album
     ORDER BY plays DESC
     LIMIT 20
-  `).all(AVG_TRACK_SECONDS, ...(filter.params || []));
+  `).all(avgSeconds, ...(filter.params || []));
 
   await Promise.all(rows.map(async (row) => {
     if (!row.album_image) {
@@ -97,6 +133,7 @@ app.get("/api/plays-per-day", (req, res) => {
 
 app.get("/api/summary", (req, res) => {
   const filter = getActiveFilter(req.query);
+  const avgSeconds = SettingsService.get("AVG_TRACK_SECONDS") || 180;
 
   const row = db.prepare(`
     SELECT
@@ -106,7 +143,7 @@ app.get("/api/summary", (req, res) => {
     ${filter.where ? `WHERE ${filter.where}` : ""}
   `).get(...(filter.params || []));
 
-  const totalMinutes = Math.round((row.totalPlays * AVG_TRACK_SECONDS) / 60);
+  const totalMinutes = Math.round((row.totalPlays * avgSeconds) / 60);
   const avgPerDay = row.days ? (row.totalPlays / row.days).toFixed(1) : 0;
 
   res.json({
@@ -147,8 +184,8 @@ app.get("/api/recent-scrobbles", async (req, res) => {
     const response = await axios.get("https://ws.audioscrobbler.com/2.0/", {
       params: {
         method: "user.getrecenttracks",
-        user: process.env.LASTFM_USERNAME,
-        api_key: process.env.LASTFM_API_KEY,
+        user: SettingsService.get("LASTFM_USERNAME"),
+        api_key: SettingsService.get("LASTFM_API_KEY"),
         format: "json",
         limit,
         page

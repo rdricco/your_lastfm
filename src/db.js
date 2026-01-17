@@ -34,6 +34,13 @@ const MIGRATIONS = [
   // Version 2: Ensure album_image column exists (for existing DBs from before v1 was cleaner)
   `
   ALTER TABLE scrobbles ADD COLUMN album_image TEXT;
+  `,
+  // Version 3: Settings table
+  `
+  CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+  );
   `
 ];
 
