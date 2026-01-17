@@ -213,8 +213,35 @@ app.get("/api/recent-scrobbles", async (req, res) => {
     });
 
   } catch (err) {
-    console.error("[recent-scrobbles ERROR]", err.response?.data || err.message);
-    res.status(500).json({ error: "Failed to fetch recent scrobbles" });
+    console.warn("[recent-scrobbles] External API failed, using local fallback:", err.message);
+
+    try {
+      // Fallback: fetch from local database
+      const rows = db.prepare(`
+        SELECT artist, track, album, album_image, played_at
+        FROM scrobbles
+        ORDER BY played_at DESC
+        LIMIT 20
+      `).all();
+
+      const tracks = await Promise.all(rows.map(async (r) => ({
+        track: r.track,
+        artist: r.artist,
+        image: r.album_image || (await ensureArtistImage(r.artist)),
+        nowPlaying: false,
+        date: r.played_at * 1000 // Convert unix seconds to ms
+      })));
+
+      res.json({
+        tracks,
+        hasMore: false,
+        isOffline: true
+      });
+
+    } catch (dbErr) {
+      console.error("[recent-scrobbles ERROR] Fallback also failed:", dbErr);
+      res.status(500).json({ error: "Failed to fetch recent scrobbles (Online & Offline modes)" });
+    }
   }
 });
 
