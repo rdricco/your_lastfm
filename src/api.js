@@ -37,13 +37,13 @@ app.get("/api/top-artists", async (req, res) => {
 
     const rows = db.prepare(query).all(...filter.params);
 
-    for (const r of rows) {
+    await Promise.all(rows.map(async (r) => {
       try {
         r.image = await ensureArtistImage(r.artist);
       } catch {
         r.image = null;
       }
-    }
+    }));
 
     res.json(rows);
 
@@ -69,11 +69,11 @@ app.get("/api/top-tracks", async (req, res) => {
     LIMIT 20
   `).all(AVG_TRACK_SECONDS, ...(filter.params || []));
 
-  for (const row of rows) {
+  await Promise.all(rows.map(async (row) => {
     if (!row.album_image) {
       row.album_image = await ensureAlbumCover(row.artist, row.album);
     }
-  }
+  }));
 
   res.json(rows);
 });
@@ -130,11 +130,11 @@ app.get("/api/top-albums", async (req, res) => {
     LIMIT 12
   `).all(...(filter.params || []));
 
-  for (const a of albums) {
+  await Promise.all(albums.map(async (a) => {
     if (!a.album_image) {
       a.album_image = await ensureAlbumCover(a.artist, a.album);
     }
-  }
+  }));
 
   res.json(albums);
 });
