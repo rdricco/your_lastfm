@@ -4,6 +4,10 @@
   "description": "",
   "main": "src/api.js",
   "scripts": {
+    "start": "node src/api.js",
+    "dev": "node --watch src/api.js",
+    "sync": "node src/initial-sync.js",
+    "cron": "node src/cron.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
