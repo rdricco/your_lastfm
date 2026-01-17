@@ -257,7 +257,7 @@ app.post("/api/sync", async (req, res) => {
   res.json({ message: "Sync started" }); // Respond immediately
 
   try {
-    const isFull = req.body.full === true;
+    const isFull = req.body && req.body.full === true;
     await sync({ full: isFull });
   } catch (err) {
     console.error("Manual sync failed:", err);
